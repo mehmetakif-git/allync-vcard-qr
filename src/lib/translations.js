@@ -1,7 +1,7 @@
 export const translations = {
   en: {
     title: 'Allync-Ai',
-    slogan: 'beyond human automation',
+    slogan: 'Beyond human automation',
     location: 'Doha, Qatar (HQ)',
     phoneMain: 'Qatar (Main)',
     phoneTurkey: 'Turkey',
@@ -13,7 +13,7 @@ export const translations = {
   },
   tr: {
     title: 'Allync-Ai',
-    slogan: 'insanın ötesinde otomasyon',
+    slogan: 'İnsanın ötesinde otomasyon',
     location: 'Doha, Katar (Merkez)',
     phoneMain: 'Katar (Ana)',
     phoneTurkey: 'Türkiye',
