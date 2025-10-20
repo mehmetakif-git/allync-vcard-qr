@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, Globe, MapPin, Instagram } from 'lucide-react';
+import { Phone, Globe, MapPin, Instagram, Sparkles } from 'lucide-react';
 import ContactButton from './ContactButton';
 import ShinyText from './ShinyText';
 import { trackScan } from '../lib/supabase';
@@ -82,8 +82,16 @@ export default function VCardDisplay() {
             </motion.div>
           </motion.div>
 
-          <ShinyText text="Allync-Ai" className="text-5xl font-bold mb-3" speed={4} />
-          <ShinyText text="beyond human automation" className="text-2xl italic mb-4" speed={6} />
+          {/* Ana başlık */}
+          <div className="mb-6">
+            <ShinyText text="Allync-Ai" className="text-5xl font-bold" speed={4} />
+          </div>
+
+          {/* Slogan - Sparkles ile birlikte */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Sparkles size={20} className="text-white" />
+            <ShinyText text="beyond human automation" className="text-2xl italic" speed={6} />
+          </div>
 
           <motion.div
             className="flex items-center justify-center gap-2 text-white/60"
