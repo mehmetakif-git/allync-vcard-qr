@@ -1,14 +1,30 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, Globe, MapPin, Instagram, Sparkles } from 'lucide-react';
+import { Phone, Globe, MapPin, Instagram, Sparkles, Languages } from 'lucide-react';
 import ContactButton from './ContactButton';
 import ShinyText from './ShinyText';
 import { trackScan } from '../lib/supabase';
+import { translations, detectLanguageByIP } from '../lib/translations';
 
 export default function VCardDisplay() {
+  const [language, setLanguage] = useState('en');
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    trackScan();
+    const initLanguage = async () => {
+      trackScan();
+      const detectedLang = await detectLanguageByIP();
+      setLanguage(detectedLang);
+      setLoading(false);
+    };
+    initLanguage();
   }, []);
+
+  const t = translations[language];
+
+  const toggleLanguage = () => {
+    setLanguage(prev => prev === 'en' ? 'tr' : 'en');
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -37,6 +53,14 @@ export default function VCardDisplay() {
     border: '1px solid rgba(255, 255, 255, 0.1)'
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#2b2c2c' }}>
+        <div className="text-white text-xl">{translations.en.loading}</div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen py-16 px-4 relative overflow-hidden"
@@ -47,6 +71,25 @@ export default function VCardDisplay() {
         `
       }}
     >
+      {/* Language Toggle Button */}
+      <motion.button
+        onClick={toggleLanguage}
+        className="fixed top-4 right-4 z-50 px-4 py-2 rounded-xl flex items-center gap-2 font-semibold text-sm text-white/60 hover:text-white"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+      >
+        <Languages size={16} />
+        <span>{language === 'en' ? 'TR' : 'EN'}</span>
+      </motion.button>
+
       <motion.div
         className="max-w-2xl mx-auto relative z-10"
         variants={containerVariants}
@@ -75,7 +118,6 @@ export default function VCardDisplay() {
                 alt="Allync-Ai Profile"
                 className="w-full h-full object-cover rounded-full"
                 onError={(e) => {
-                  // Eğer fotoğraf yoksa fallback
                   e.target.outerHTML = '<div class="text-white text-5xl font-bold flex items-center justify-center w-full h-full">A</div>';
                 }}
               />
@@ -84,13 +126,13 @@ export default function VCardDisplay() {
 
           {/* Ana başlık */}
           <div className="mb-6">
-            <ShinyText text="Allync-Ai" className="text-5xl font-bold" speed={4} />
+            <ShinyText text={t.title} className="text-5xl font-bold" speed={4} />
           </div>
 
           {/* Slogan - Sparkles ile birlikte */}
           <div className="flex items-center justify-center gap-2 mb-4">
             <Sparkles size={20} className="text-white" />
-            <ShinyText text="beyond human automation" className="text-2xl italic" speed={6} />
+            <ShinyText text={t.slogan} className="text-2xl italic" speed={6} />
           </div>
 
           <motion.div
@@ -100,7 +142,7 @@ export default function VCardDisplay() {
             transition={{ delay: 0.8, duration: 0.3 }}
           >
             <MapPin size={18} className="text-white/60" />
-            <span className="text-sm">Doha, Qatar (HQ)</span>
+            <span className="text-sm">{t.location}</span>
           </motion.div>
         </motion.div>
 
@@ -119,7 +161,7 @@ export default function VCardDisplay() {
                 <Phone size={20} />
               </div>
               <div>
-                <div className="text-xs text-white/50 mb-1">Qatar (Main)</div>
+                <div className="text-xs text-white/50 mb-1">{t.phoneMain}</div>
                 <a href="tel:+97451079565" className="text-lg font-semibold hover:text-white/80 transition-colors">
                   🇶🇦 +974 5107 9565
                 </a>
@@ -141,7 +183,7 @@ export default function VCardDisplay() {
                 <Phone size={20} />
               </div>
               <div>
-                <div className="text-xs text-white/50 mb-1">Turkey</div>
+                <div className="text-xs text-white/50 mb-1">{t.phoneTurkey}</div>
                 <a href="tel:+905334940416" className="text-lg font-semibold hover:text-white/80 transition-colors">
                   🇹🇷 +90 533 494 04 16
                 </a>
@@ -200,19 +242,19 @@ export default function VCardDisplay() {
             transition={{ duration: 0.3 }}
           >
             <Instagram size={24} />
-            <span>Follow on Instagram</span>
+            <span>{t.instagram}</span>
           </motion.a>
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <ContactButton />
+          <ContactButton language={language} />
         </motion.div>
 
         <motion.p
           variants={itemVariants}
           className="text-center text-white/30 mt-8 text-sm"
         >
-          © 2025 Allync-Ai. All rights reserved.
+          {t.copyright}
         </motion.p>
       </motion.div>
     </div>

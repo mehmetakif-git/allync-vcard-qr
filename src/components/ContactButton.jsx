@@ -1,17 +1,14 @@
 import { Download } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { detectDevice } from '../lib/supabase';
 import { downloadVCard } from '../utils/vcard';
+import { translations } from '../lib/translations';
 
-export default function ContactButton() {
+export default function ContactButton({ language = 'en' }) {
+  const t = translations[language];
+  
   const handleSaveContact = () => {
-    const device = detectDevice();
-
-    if (device === 'iOS') {
-      window.location.href = 'tel:+97451079565';
-    } else {
-      downloadVCard();
-    }
+    // Her cihazda vCard download - dil parametresi ile
+    downloadVCard(language);
   };
 
   return (
@@ -28,7 +25,7 @@ export default function ContactButton() {
     >
       <div className="flex items-center justify-center gap-3">
         <Download size={26} />
-        <span>Save to Contacts</span>
+        <span>{t.saveContact}</span>
       </div>
     </motion.button>
   );
