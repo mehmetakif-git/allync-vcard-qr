@@ -13,18 +13,19 @@ export function detectDevice() {
   return 'Desktop'
 }
 
-// Track scan
-export async function trackScan() {
+// Track scan - artık slug'a göre çalışıyor
+export async function trackScan(slug = 'allyn') {
   try {
-    // Get QR code ID
+    // Get QR code by slug
     const { data: qrCode } = await supabase
       .from('qr_codes')
       .select('id')
-      .eq('slug', 'allyn')
+      .eq('slug', slug)
+      .eq('is_active', true)
       .single()
 
     if (!qrCode) {
-      console.error('QR code not found')
+      console.error('QR code not found for slug:', slug)
       return
     }
 
@@ -36,22 +37,22 @@ export async function trackScan() {
           qr_code_id: qrCode.id,
           device_type: detectDevice(),
           user_agent: navigator.userAgent,
-          country: 'QA' // veya IP detection ekleyebilirsin
+          country: 'QA'
         }
       ])
 
     if (error) throw error
-    console.log('Scan tracked successfully!')
+    console.log('Scan tracked successfully for:', slug)
     return data
   } catch (error) {
     console.error('Error tracking scan:', error)
   }
 }
 
-// Get analytics data
+// Get analytics data - tüm QR kodlar için
 export async function getAnalytics() {
   try {
-    // Get QR code ID
+    // Get default QR code (allyn)
     const { data: qrCode } = await supabase
       .from('qr_codes')
       .select('id')
@@ -74,13 +75,13 @@ export async function getAnalytics() {
       .eq('qr_code_id', qrCode.id)
       .gte('scanned_at', today)
 
-    // Recent scans
+    // Recent scans - updated column name
     const { data: recentScans } = await supabase
       .from('scans')
       .select('*')
       .eq('qr_code_id', qrCode.id)
-      .order('scanned_at', { ascending: false })
-      .limit(20)
+      .order('created_at', { ascending: false })
+      .limit(50)
 
     // Device breakdown
     const { data: deviceStats } = await supabase

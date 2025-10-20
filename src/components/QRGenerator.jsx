@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Download, Upload, Palette, Sparkles, Check, X } from 'lucide-react';
+import { Download, Upload, Palette, Sparkles, Check, X, Plus, Link as LinkIcon } from 'lucide-react';
 import QRCodeStyling from 'qr-code-styling';
 import ShinyText from './ShinyText';
+import { supabase } from '../lib/supabase';
 
 export default function QRGenerator() {
   const [qrCode, setQrCode] = useState(null);
@@ -11,10 +12,20 @@ export default function QRGenerator() {
   const [logo, setLogo] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState('rounded');
-  const [selectedSize, setSelectedSize] = useState(1000);
+  const [selectedSize, setSelectedSize] = useState(512); // 512px ile başlatıldı!
   const [errorLevel, setErrorLevel] = useState('H');
   const [isDragging, setIsDragging] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  
+  // New states for QR management
+  const [qrCodes, setQrCodes] = useState([]);
+  const [selectedQRId, setSelectedQRId] = useState(null);
+  const [newSlug, setNewSlug] = useState('');
+  const [newRedirectUrl, setNewRedirectUrl] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [currentQRUrl, setCurrentQRUrl] = useState('https://qr.allyncai.com/allyn');
+
   const qrRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -40,11 +51,64 @@ export default function QRGenerator() {
     border: '1px solid rgba(255, 255, 255, 0.1)'
   };
 
+  // Load QR codes from Supabase
+  useEffect(() => {
+    loadQRCodes();
+  }, []);
+
+  const loadQRCodes = async () => {
+    const { data, error } = await supabase
+      .from('qr_codes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (data && data.length > 0) {
+      setQrCodes(data);
+      setSelectedQRId(data[0].id);
+      setCurrentQRUrl(`https://qr.allyncai.com/${data[0].slug}`);
+    }
+  };
+
+  const createNewQR = async () => {
+    if (!newSlug || !newRedirectUrl) {
+      alert('Please fill slug and redirect URL');
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('qr_codes')
+      .insert([{
+        slug: newSlug,
+        redirect_url: newRedirectUrl,
+        title: newTitle || newSlug
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      alert('Error creating QR code: ' + error.message);
+      return;
+    }
+
+    setQrCodes([data, ...qrCodes]);
+    setSelectedQRId(data.id);
+    setCurrentQRUrl(`https://qr.allyncai.com/${data.slug}`);
+    setShowCreateForm(false);
+    setNewSlug('');
+    setNewRedirectUrl('');
+    setNewTitle('');
+  };
+
+  const selectQR = (qr) => {
+    setSelectedQRId(qr.id);
+    setCurrentQRUrl(`https://qr.allyncai.com/${qr.slug}`);
+  };
+
   useEffect(() => {
     const qr = new QRCodeStyling({
       width: selectedSize,
       height: selectedSize,
-      data: 'https://qr.allyncai.com/allyn',
+      data: currentQRUrl,
       image: logo,
       dotsOptions: {
         type: selectedStyle,
@@ -97,7 +161,7 @@ export default function QRGenerator() {
       qrCode.update({
         width: selectedSize,
         height: selectedSize,
-        data: 'https://qr.allyncai.com/allyn',
+        data: currentQRUrl,
         image: logo,
         dotsOptions: {
           type: selectedStyle,
@@ -137,7 +201,7 @@ export default function QRGenerator() {
 
   useEffect(() => {
     updateQR();
-  }, [dotsColor, backgroundColor, logo, selectedStyle, selectedSize, errorLevel]);
+  }, [dotsColor, backgroundColor, logo, selectedStyle, selectedSize, errorLevel, currentQRUrl]);
 
   const handleLogoUpload = (file) => {
     if (file && file.type.startsWith('image/')) {
@@ -179,9 +243,10 @@ export default function QRGenerator() {
 
   const downloadQR = (extension) => {
     if (qrCode) {
+      const selectedQR = qrCodes.find(q => q.id === selectedQRId);
       qrCode.download({
         extension,
-        name: 'allync-vcard-qr'
+        name: selectedQR ? `${selectedQR.slug}-qr` : 'qr-code'
       });
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 2000);
@@ -210,8 +275,95 @@ export default function QRGenerator() {
             <ShinyText text="QR Code Generator" className="text-5xl font-bold" speed={4} />
             <Sparkles size={32} className="text-white/60" />
           </div>
-          <p className="text-white/60 text-lg">Create customized QR codes for Allync-Ai</p>
+          <p className="text-white/60 text-lg">Create and customize QR codes</p>
         </div>
+
+        {/* QR Code Selection */}
+        <motion.div
+          className="mb-8 rounded-3xl p-6"
+          style={cardStyle}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <LinkIcon size={20} />
+              Select QR Code
+            </h3>
+            <motion.button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className="px-4 py-2 rounded-xl font-semibold text-sm text-white flex items-center gap-2"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Plus size={16} />
+              New QR
+            </motion.button>
+          </div>
+
+          {showCreateForm && (
+            <motion.div
+              className="mb-4 p-4 rounded-xl bg-white/5 border border-white/10 space-y-3"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+            >
+              <input
+                type="text"
+                placeholder="Slug (e.g., john-doe)"
+                value={newSlug}
+                onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                className="w-full bg-white/5 text-white px-3 py-2 rounded-lg border border-white/10 focus:outline-none focus:border-white/30"
+              />
+              <input
+                type="url"
+                placeholder="Redirect URL (e.g., https://example.com/profile)"
+                value={newRedirectUrl}
+                onChange={(e) => setNewRedirectUrl(e.target.value)}
+                className="w-full bg-white/5 text-white px-3 py-2 rounded-lg border border-white/10 focus:outline-none focus:border-white/30"
+              />
+              <input
+                type="text"
+                placeholder="Title (optional)"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className="w-full bg-white/5 text-white px-3 py-2 rounded-lg border border-white/10 focus:outline-none focus:border-white/30"
+              />
+              <button
+                onClick={createNewQR}
+                className="w-full py-2 rounded-lg font-semibold text-white bg-white/10 hover:bg-white/15 border border-white/20"
+              >
+                Create QR Code
+              </button>
+            </motion.div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {qrCodes.map((qr) => (
+              <motion.button
+                key={qr.id}
+                onClick={() => selectQR(qr)}
+                className={`p-4 rounded-xl border text-left transition-all ${
+                  selectedQRId === qr.id
+                    ? 'border-white/20 bg-white/15'
+                    : 'border-white/10 bg-white/5 hover:border-white/20'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white font-semibold">{qr.title || qr.slug}</span>
+                  {selectedQRId === qr.id && <Check size={16} className="text-white" />}
+                </div>
+                <p className="text-white/50 text-xs">/{qr.slug}</p>
+                <p className="text-white/40 text-xs truncate">{qr.redirect_url}</p>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-8">
           <motion.div
@@ -420,11 +572,21 @@ export default function QRGenerator() {
             transition={{ delay: 0.3 }}
           >
             <h3 className="text-xl font-bold text-white mb-6">Live Preview</h3>
-            <div className="relative bg-[#2b2c2c] rounded-2xl p-8 flex items-center justify-center min-h-[400px] border border-white/10">
-              <div ref={qrRef} className="flex items-center justify-center relative z-10" />
+            <div 
+              className="relative bg-[#2b2c2c] rounded-2xl p-8 flex items-center justify-center border border-white/10"
+              style={{ minHeight: '400px' }}
+            >
+              <div 
+                ref={qrRef} 
+                className="flex items-center justify-center relative z-10"
+                style={{ 
+                  maxWidth: '100%',
+                  maxHeight: '100%'
+                }}
+              />
             </div>
             <p className="text-white/50 text-center mt-4 text-sm">
-              Scans redirect to: <span className="text-white font-semibold">https://qr.allyncai.com/allyn</span>
+              Scans redirect to: <span className="text-white font-semibold break-all">{currentQRUrl}</span>
             </p>
           </motion.div>
         </div>

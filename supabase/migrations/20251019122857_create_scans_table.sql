@@ -4,7 +4,7 @@
   1. New Tables
     - `scans`
       - `id` (uuid, primary key) - Unique identifier for each scan
-      - `qr_code_id` (text) - Identifier for the QR code being scanned
+      - `qr_code_id` (uuid) - Foreign key to qr_codes table
       - `device_type` (text) - Device type (iOS/Android/Desktop)
       - `user_agent` (text) - Full user agent string for detailed analytics
       - `country` (text) - Country code (e.g., 'QA', 'TR')
@@ -23,7 +23,7 @@
 
 CREATE TABLE IF NOT EXISTS scans (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  qr_code_id text NOT NULL DEFAULT 'allync-main',
+  qr_code_id uuid NOT NULL,
   device_type text NOT NULL,
   user_agent text NOT NULL,
   country text DEFAULT 'QA',
@@ -46,6 +46,13 @@ CREATE POLICY "Authenticated users can view all scans"
   ON scans
   FOR SELECT
   TO authenticated
+  USING (true);
+
+-- Allow anonymous users to read scans (for public analytics if needed)
+CREATE POLICY "Anonymous users can view scans"
+  ON scans
+  FOR SELECT
+  TO anon
   USING (true);
 
 -- Create indexes for performance
