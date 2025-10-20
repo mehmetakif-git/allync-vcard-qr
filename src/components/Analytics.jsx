@@ -82,7 +82,7 @@ export default function Analytics() {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     return (stats.recentScans || []).filter(scan => 
-      new Date(scan.scanned_at) >= weekAgo
+      new Date(scan.created_at) >= weekAgo
     ).length;
   };
 
@@ -90,7 +90,7 @@ export default function Analytics() {
     const monthAgo = new Date();
     monthAgo.setMonth(monthAgo.getMonth() - 1);
     return (stats.recentScans || []).filter(scan => 
-      new Date(scan.scanned_at) >= monthAgo
+      new Date(scan.created_at) >= monthAgo
     ).length;
   };
 
@@ -120,7 +120,7 @@ export default function Analytics() {
       nextDay.setDate(nextDay.getDate() + 1);
 
       const count = scansArray.filter(scan => {
-        const scanDate = new Date(scan.scanned_at);
+        const scanDate = new Date(scan.created_at);
         return scanDate >= date && scanDate < nextDay;
       }).length;
 
@@ -354,7 +354,7 @@ export default function Analytics() {
                           </div>
                           <div>
                             <div className="text-white font-medium">{scan.device_type}</div>
-                            <div className="text-white/50 text-xs">{formatDate(scan.scanned_at)}</div>
+                            <div className="text-white/50 text-xs">{formatDate(scan.created_at)}</div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 text-white/70">

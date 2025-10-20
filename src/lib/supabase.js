@@ -73,7 +73,7 @@ export async function getAnalytics() {
       .from('scans')
       .select('*', { count: 'exact', head: true })
       .eq('qr_code_id', qrCode.id)
-      .gte('scanned_at', today)
+      .gte('created_at', today)
 
     // Recent scans - updated column name
     const { data: recentScans } = await supabase
