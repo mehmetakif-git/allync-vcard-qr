@@ -15,7 +15,7 @@ export const translations = {
     title: 'Allync-Ai',
     slogan: 'İnsanın ötesinde otomasyon',
     location: 'Bursa, Türkiye',
-    phoneMain: 'Katar (Ana)',
+    phoneMain: 'Katar',
     phoneTurkey: 'Türkiye',
     websites: 'Web Siteleri',
     instagram: 'Instagram\'da Takip Et',
