@@ -114,7 +114,7 @@ export default function VCardDisplay() {
           </motion.div>
 
           {/* Ana başlık */}
-          <div className="mb-6">
+          <div className="mb-6 leading-relaxed">
             <ShinyText text={t.title} className="text-5xl font-bold" speed={4} />
           </div>
 

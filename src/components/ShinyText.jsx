@@ -11,7 +11,8 @@ const ShinyText = ({ text, className = '', speed = 5 }) => {
         animation: `shine ${speed}s linear infinite`,
         paddingLeft: '0.1em',
         paddingRight: '0.1em',
-        overflow: 'visible'
+        overflow: 'visible',
+        lineHeight: '1.2'
       }}
     >
       {text}
