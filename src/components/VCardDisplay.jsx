@@ -4,26 +4,23 @@ import { Phone, Globe, MapPin, Instagram, Sparkles, Languages } from 'lucide-rea
 import ContactButton from './ContactButton';
 import ShinyText from './ShinyText';
 import { trackScan } from '../lib/supabase';
-import { translations, detectLanguageByIP } from '../lib/translations';
+import { translations, getInitialLanguage, saveLanguagePreference } from '../lib/translations';
 
 export default function VCardDisplay() {
-  const [language, setLanguage] = useState('en');
-  const [loading, setLoading] = useState(true);
+  // Direkt browser dilini kullan - ANINDA açılır!
+  const [language, setLanguage] = useState(getInitialLanguage());
 
   useEffect(() => {
-    const initLanguage = async () => {
-      trackScan();
-      const detectedLang = await detectLanguageByIP();
-      setLanguage(detectedLang);
-      setLoading(false);
-    };
-    initLanguage();
+    // Sadece scan tracking - asenkron, hata olsa bile sayfa açılır
+    trackScan().catch(err => console.warn('Scan tracking error:', err));
   }, []);
 
   const t = translations[language];
 
   const toggleLanguage = () => {
-    setLanguage(prev => prev === 'en' ? 'tr' : 'en');
+    const newLang = language === 'en' ? 'tr' : 'en';
+    setLanguage(newLang);
+    saveLanguagePreference(newLang); // Seçimi kaydet
   };
 
   const containerVariants = {
@@ -52,14 +49,6 @@ export default function VCardDisplay() {
     WebkitBackdropFilter: 'blur(20px)',
     border: '1px solid rgba(255, 255, 255, 0.1)'
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#2b2c2c' }}>
-        <div className="text-white text-xl">{translations.en.loading}</div>
-      </div>
-    );
-  }
 
   return (
     <div
