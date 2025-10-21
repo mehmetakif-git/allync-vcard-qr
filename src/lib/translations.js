@@ -1,7 +1,7 @@
 export const translations = {
   en: {
     title: 'Allync-Ai',
-    slogan: 'Beyond human automation',
+    slogan: 'beyond human automation',
     location: 'Doha, Qatar (HQ)',
     phoneMain: 'Qatar (Main)',
     phoneTurkey: 'Turkey',
@@ -13,7 +13,7 @@ export const translations = {
   },
   tr: {
     title: 'Allync-Ai',
-    slogan: 'İnsanın ötesinde otomasyon',
+    slogan: 'insanın ötesinde otomasyon',
     location: 'Doha, Katar (Merkez)',
     phoneMain: 'Katar (Ana)',
     phoneTurkey: 'Türkiye',
@@ -25,19 +25,35 @@ export const translations = {
   }
 };
 
-// IP'ye göre dil tespiti
-export async function detectLanguageByIP() {
+// Sadece browser dilini kullan - %100 güvenilir!
+export function getInitialLanguage() {
+  // 1. LocalStorage'dan oku (kullanıcı daha önce seçtiyse)
   try {
-    const response = await fetch('https://ipapi.co/json/');
-    const data = await response.json();
-    
-    // Türkiye'den geliyorsa TR, değilse EN
-    if (data.country_code === 'TR') {
-      return 'tr';
+    const saved = localStorage.getItem('allync_language');
+    if (saved === 'tr' || saved === 'en') {
+      return saved;
     }
-    return 'en';
-  } catch (error) {
-    console.error('Language detection error:', error);
-    return 'en'; // Varsayılan İngilizce
+  } catch (e) {
+    console.warn('LocalStorage read error:', e);
+  }
+
+  // 2. Browser dilini kontrol et
+  const browserLang = navigator.language.split('-')[0].toLowerCase();
+  
+  // TR, TR-tr, tr-TR gibi tüm türkçe varyantları yakala
+  if (browserLang === 'tr') {
+    return 'tr';
+  }
+  
+  // Varsayılan İngilizce
+  return 'en';
+}
+
+// Dil seçimini kaydet
+export function saveLanguagePreference(lang) {
+  try {
+    localStorage.setItem('allync_language', lang);
+  } catch (e) {
+    console.warn('LocalStorage write error:', e);
   }
 }
